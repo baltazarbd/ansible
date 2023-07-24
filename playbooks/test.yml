@@ -1,0 +1,6 @@
+---
+
+- hosts: mmm
+  gather_facts: true
+  roles:
+    - test

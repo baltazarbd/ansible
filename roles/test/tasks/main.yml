@@ -1,0 +1,10 @@
+- name: "copy service configs to "
+  template:
+    src   : "{{ item | basename }}"
+    dest  : "{{ service.path }}/{{ service.name }}/{{ item | basename }}"
+    mode  : 0775
+    force : true
+  loop_control:
+    label: "{{ item | basename }}"
+  with_items:
+    - "{{ service.files }}"

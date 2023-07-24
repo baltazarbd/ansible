@@ -1,0 +1,17 @@
+[mmm]
+10.209.111.101
+10.209.111.69
+10.209.111.91
+10.209.111.137
+10.209.111.120
+10.209.111.107
+10.209.111.57
+10.209.111.10
+
+
+
+[insecuressh:children]
+mmm
+
+[insecuressh:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'

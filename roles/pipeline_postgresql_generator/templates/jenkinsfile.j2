@@ -1,0 +1,88 @@
+def jobinfo =   "Databases list: \n"+
+{% for hostname_list in hostname_lists.results %}
+"{{ hostname_list.stdout }}\n" + {% endfor %}"\n";
+
+currentBuild.rawBuild.project.description = jobinfo;
+
+pipeline {
+    agent { label 'worker-linux' }
+    environment {
+        KeyFile = credentials('944cbec1-6f0f-4261-979f-1e9df1062363')
+        sshcmd = "ssh -o StrictHostKeyChecking=no  -l rnd-deploy"
+        pg_ctlcluster_arg = " main promote"
+    }
+    parameters {
+        choice(name: 'main_pg', choices: ['replica', 'master'], description: 'Хост на котором должен быть вип')
+        booleanParam(name: 'force', defaultValue: false, description: '??!!')
+        booleanParam(name: 'promote', defaultValue: true, description: 'Do promote \n\n\n\n')
+{% for hostname_list in hostname_lists.results %}
+{% set list = hostname_list.stdout %}
+{% set list = list.split('-') %}
+        booleanParam(name: "{{ list[1] }}", defaultValue: true, description: 'Run in {{ hostname_list.stdout }}')
+{% endfor %}
+    }
+
+    stages {
+        stage('Parallel Stage') {
+            parallel {
+{% set list = hostname_lists %}
+{% for db in dbs %}
+{% set list1 = list.results[loop.index-1].stdout.split('-')[1] %}
+                stage('Add vip ip for {{ list1 }} to master ') {
+                    when {
+                        allOf { 
+                            expression { params.main_pg == 'master' }
+                            expression { params.force == true }
+                            expression { params.{{list1}} == true }
+                        }
+                    }
+                    steps {
+                        script {
+                            try {
+                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo  ip addr del {{ db.ips[2]}} dev ens192 ')
+                                }
+                            catch (Exception e) {
+    //                        throw e
+                            }
+                            def pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
+                            if (params.promote == true) {
+                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
+                            } else {
+                                echo 'Skip  promote'
+                            }
+                            sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo  ip addr add {{ db.ips[2]}} dev ens192 ')
+                        }
+                    }
+                }
+                stage('Add vip ip for {{ list1 }} to replica ') {    
+                    when {
+                        allOf { 
+                            expression { params.main_pg == 'replica' }
+                            expression { params.force == true }
+                            expression { params.{{list1}} == true }
+
+                        }
+                    }
+                    steps {
+                        script {
+                            try {
+                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo  ip addr del {{ db.ips[2]}} dev ens192 ')
+                                }
+                            catch (Exception e) {
+    //                       throw e
+                            }
+                            def pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
+                            if (params.promote == true) {
+                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
+                            } else {
+                                echo 'Skip  promote'
+                            }
+                            sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo  ip addr add {{ db.ips[2]}} dev ens192 ')
+                        }
+                    }
+                }
+{% endfor %}
+            }
+        }
+    }
+}

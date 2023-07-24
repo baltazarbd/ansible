@@ -1,0 +1,40 @@
+- include: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
+  with_items:
+    - 51
+    - 52
+    - 53
+    - 54
+    - 55
+    - 56
+    - 57
+    - 58
+
+- include: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
+  with_items:
+    - 51r3
+    - 52r3
+    - 53r3
+    - 54r3
+    - 55r3
+    - 56r3
+    - 57r3
+    - 58r3
+
+- include: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
+  with_items:
+    - 51test
+    - 52test
+    - 53test
+    - 54test
+    - 55test
+    - 56test
+    - 57test
+    - 58test
+
+#- include: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
+#  with_items:
+#      - all
+
+- include: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
+  with_items:
+      - sm

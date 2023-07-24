@@ -1,0 +1,39 @@
+---
+
+service:
+  path  : "/srv"
+  name  : "adapter-bk"
+  owner : "rnd-deploy"
+  group : "root"
+  files :
+    - "run_app.sh"
+
+docker:
+  log_driver:
+    syslog:
+      enabled : false
+    size: "2048m"
+  ports:
+    - 8080:8080
+    - 9091:9091
+  #links:
+  #  -
+  vars_file: "variables.env"
+  volumes:
+    - /srv/adapter-bk/config.yaml:/bin/config.yaml:ro
+#CONSTANTA-2005    - /srv/adapter-bk/translate.yaml:/bin/translate.yaml:ro
+  registry   : "nexus.fbsvc.bz"
+  team       : "constanta_docker"
+  image      : "adapter"
+  #command    : ""
+
+gitlab:
+  url       : "https://gitlab.fbsvc.bz/api/v4/projects/"
+  token     : "LXqpzmhx3MUrpfZy5Kvq"
+  namespace : "constanta-payments-config"
+  project   : "prod-configs"
+  branch    : "master"
+  files     :
+    - "payments/adapter/bk/config.yaml"
+#CONSTANTA-2005    - "payments/adapter/bk/translate.yaml"
+    - "payments/adapter/bk/variables.env"
