@@ -1,0 +1,50 @@
+- name: IP Sync
+  hosts: localhost
+  # become: true
+  vars:
+    ips_file: "../iplist"
+    bobber_ips_url: "https://bobber-ob.admsvc.bz/api/v1/ips/"
+    bobber_api_token: "850e93c06ff17c5032d567a01ee567fb9d85af95"
+
+  tasks:
+    - name: Get include file content
+      ansible.builtin.slurp:
+        src: "{{ ips_file }}"
+      register: ips_file_content
+
+    - name: Get Host ID regex
+      ansible.builtin.set_fact:
+        bobber_host_id_regex: "{{ ips_file_content['content'] | b64decode | regex_findall('# host_id = (.+)') }}"
+
+    - name: Set default Host ID = 0
+      ansible.builtin.set_fact:
+        bobber_host_id: 0
+
+    - name: Get Host ID
+      ansible.builtin.set_fact:
+        bobber_host_id: "{{ bobber_host_id_regex | first }}"
+      when: bobber_host_id_regex
+
+    - name: Debug
+      ansible.builtin.debug:
+        msg: "{{ bobber_host_id }}"
+
+    - name: Debug
+      ansible.builtin.debug:
+        msg: "{{ item }}"
+      loop: "{{ lookup('file', ips_file).splitlines() }}"
+
+    - name: POST IP List to Bobber
+      ansible.builtin.uri:
+        url: "{{ bobber_ips_url }}"
+        method: POST
+        body:
+          address: "{{ item }}"
+          host: "{{ bobber_host_id }}"
+        body_format: json
+        headers:
+           Authorization: Token {{ bobber_api_token }}
+        status_code: 201
+      delegate_to: localhost
+      # ignore_errors: true
+      loop: "{{ lookup('file', ips_file).splitlines() }}"
