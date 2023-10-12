@@ -1,0 +1,21 @@
+- hosts: localhost
+  gather_facts: no
+
+  vars:
+    myitems:
+      - ca01.fbc.om
+      - ca02.fbc.om
+    result_list: "{{ myitems | map('regex_replace', '^' ,'-d ') |  join(' ') }}"
+    my_list_of_strings:
+      - "Hello"
+      - "World"
+      - "Ansible"
+
+  tasks:
+  - name: show list
+    debug:
+       msg: "{{result_list}}"
+  - name: Join the list of strings using a map filter
+    debug:
+       msg: "{{ my_list_of_strings | map('regex_replace', '^(.*)$', '\\1') | join(', ') }}"
+
