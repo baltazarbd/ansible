@@ -1,0 +1,20 @@
+- hosts: mmm
+  gather_facts: true
+  
+  tasks:
+
+  - name: find files
+    find:
+      paths: "/var/www/"
+      patterns: "version.json"
+      recurse: yes
+    register: result
+    become: true
+
+ 
+  - name: delete files
+    file:
+      path: "{{item.path}}" #correction code
+      state: absent
+    with_items: " {{ result.files }}"
+    become: true
