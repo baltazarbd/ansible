@@ -1,0 +1,43 @@
+- hosts: jjj
+  user: bprokin
+  become: True
+  tasks:
+
+  - name: Ensure local certs directory exists
+    file: state=directory path=/usr/local/share/ca-certificates
+
+#  - name: Install CA  cert
+#    copy: src=/tmp/soyuz_CA.crt dest=/usr/local/share/ca-certificates/soyuz_CA.crt
+
+  # - name: Install  cert
+#    copy: src=/tmp/neteller.crt dest=/usr/local/share/ca-certificates/neteller.crt
+    # copy: src=/tmp/ISRG_Root_X1.cer dest=/usr/local/share/ca-certificates/ISRG_Root_X1.cer
+
+  # - name: Update cert index
+    # shell: /usr/sbin/update-ca-certificates
+
+
+#  - name: Import a pkcs12 keystore with a specified alias, create it if it doesn't exist
+#    java_cert:
+#      cert_path: "/usr/local/share/ca-certificates/soyuz_CA.crt"
+#      cert_alias: api.neteller.com
+#      keystore_path: /usr/lib/jvm/java-7-oracle/jre/lib/security/cacerts
+#      keystore_pass: changeit
+#      state: present
+
+
+  - name: Import a pkcs12 keystore with a specified alias, create it if it doesn't exist
+    java_cert:
+      cert_path: "/usr/local/share/ca-certificates/MMT-PrimaryROOT-CA.cer"
+      cert_alias: MMT-PrimaryROOT-CA
+      keystore_path: /usr/lib/jvm/java-17-openjdk-amd64/lib/security/cacerts
+      keystore_pass: changeit
+      state: present
+
+  - name: Import a pkcs12 keystore with a specified alias, create it if it doesn't exist1
+    java_cert:
+      cert_path: "/usr/local/share/ca-certificates/MMT-SubordinateIssuer-CA.cer"
+      cert_alias: MMT-SubordinateIssuer-CA
+      keystore_path: /usr/lib/jvm/java-17-openjdk-amd64/lib/security/cacerts
+      keystore_pass: changeit
+      state: present

@@ -4,18 +4,6 @@ def jobinfo =   "Databases list: \n"+
 
 currentBuild.rawBuild.project.description = jobinfo;
 
-def del_ip(ip1,ip2) {
-    sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ${ip1} sudo  ip addr del ${ip2} dev ens192 ')
-}
-def add_ip(ip1,ip2) {
-    sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ${ip1} sudo  ip addr add ${ip2} dev ens192 ')
-}
-def lsclusters_vesr(ip1) {
-    pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ${ip1} sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
-    return(pg_lsclusters_vesr)
-}
-
-
 pipeline {
     agent { label 'worker-linux' }
     environment {
@@ -50,15 +38,18 @@ pipeline {
                     steps {
                         script {
                             try {
-                                del_ip('{{ db.ips[1]}}', '{{ db.ips[2]}}') 
+                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo  ip addr del {{ db.ips[2]}} dev ens192 ')
                                 }
                             catch (Exception e) {
+    //                        throw e
                             }
-                            def pg_lsclusters_vesr = lsclusters_vesr('{{ db.ips[0]}}') 
+                            def pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
                             if (params.promote == true) {
                                 sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
+                            } else {
+                                echo 'Skip  promote'
                             }
-                            add_ip('{{ db.ips[0]}}', '{{ db.ips[2]}}') 
+                            sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo  ip addr add {{ db.ips[2]}} dev ens192 ')
                         }
                     }
                 }
@@ -74,15 +65,18 @@ pipeline {
                     steps {
                         script {
                             try {
-                                del_ip('{{ db.ips[0]}}', '{{ db.ips[2]}}') 
+                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo  ip addr del {{ db.ips[2]}} dev ens192 ')
                                 }
                             catch (Exception e) {
+    //                       throw e
                             }
-                            def pg_lsclusters_vesr = lsclusters_vesr('{{ db.ips[1]}}') 
+                            def pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
                             if (params.promote == true) {
                                 sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
+                            } else {
+                                echo 'Skip  promote'
                             }
-                            add_ip('{{ db.ips[1]}}', '{{ db.ips[2]}}')
+                            sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo  ip addr add {{ db.ips[2]}} dev ens192 ')
                         }
                     }
                 }
