@@ -1,0 +1,38 @@
+- hosts: localhost
+  gather_facts: no
+ 
+  vars:
+    prefix: "DNS:"
+    domains: 
+      - "*.ansible1.com"
+      - "ansible.com"
+      - "www.ansible.com"
+      - "docs.ansible.com"
+
+  tasks:
+  - name: Create private key (RSA, 4096 bits)
+    community.crypto.openssl_privatekey:
+      path: certificate.key
+
+  - name: Create certificate signing request (CSR) for self-signed certificate
+    community.crypto.openssl_csr_pipe:
+      privatekey_path: certificate.key
+      common_name: "{{ domains[0] }}"
+      organization_name: Ansible, Inc.
+      subject_alt_name: "{{ [prefix] | product(domains[1:]) | map('join') | list }}"
+    register: csr
+
+  - name: Create self-signed certificate from CSR
+    community.crypto.x509_certificate:
+      path: certificate.pem
+      csr_content: "{{ csr.csr }}"
+      privatekey_path: certificate.key
+      provider: selfsigned
+  - name: Get certificate information
+    community.crypto.x509_certificate_info:
+      path: certificate.pem
+    register: result
+
+  - name: Show certificate information
+    debug:
+       msg: "{{result}}"
