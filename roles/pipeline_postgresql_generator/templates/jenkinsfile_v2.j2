@@ -3,19 +3,58 @@ def jobinfo =   "Databases list: \n"+
 "{{ hostname_list.stdout }}\n" + {% endfor %}"\n";
 
 currentBuild.rawBuild.project.description = jobinfo;
-
-def del_ip(ip1,ip2) {
-    sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ${ip1} sudo  ip addr del ${ip2} dev ens192 ')
+def hostsMap = [
+{% for hostname_list in hostname_lists.results %}
+{% set list = hostname_list.stdout.split('-')[1] %}
+    {{ list }}: ['{{ dbs[loop.index0].ips[0]}}', '{{ dbs[loop.index0].ips[1]}}', '{{ dbs[loop.index0].ips[2]}}'],
+{% endfor %}
+]
+def createMasterStages(hostsMap) {
+    def stages = [:]
+    hostsMap.each { claster, hosts ->
+        if (params[claster] && params.force && params.main_pg == 'master') {
+            stages["${claster}"] = {
+                stage("${claster}  add vip to master") {
+                    script {
+                        try {
+                            sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[1] + ' sudo  ip addr del ' + hosts[2] + ' dev ens192 ')
+                            }
+                        catch (Exception e) {                            }
+                        def pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[0] + ' sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
+                        if (params.promote == true) {
+                            sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[0] + ' sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
+                        }
+                        sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[0] + ' sudo  ip addr add ' + hosts[2] + ' dev ens192 ')
+                    }
+                }
+            }
+        }
+    }
+    return stages
 }
-def add_ip(ip1,ip2) {
-    sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ${ip1} sudo  ip addr add ${ip2} dev ens192 ')
+def createSlaveStages(hostsMap) {
+    def stages = [:]
+    hostsMap.each { claster, hosts ->
+        if (params[claster] && params.force && params.main_pg == 'repl') {
+            stages["${claster}"] = {
+                stage("${claster}  add vip to repl") {
+                    script {
+                        try {
+                            sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[0] + ' sudo  ip addr del ' + hosts[2] + ' dev ens192 ')
+                            }
+                        catch (Exception e) {                            }
+                        def pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[1] + ' sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
+                        if (params.promote == true) {
+                            sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[1] + ' sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
+                        }
+                        sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[1] + ' sudo  ip addr add ' + hosts[2] + ' dev ens192 ')
+                    }
+                }
+            }
+        }
+    }
+    return stages
 }
-def lsclusters_vesr(ip1) {
-    pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ${ip1} sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
-    return(pg_lsclusters_vesr)
-}
-
-
 pipeline {
     agent { label 'worker-linux' }
     environment {
@@ -24,69 +63,33 @@ pipeline {
         pg_ctlcluster_arg = " main promote"
     }
     parameters {
-        choice(name: 'main_pg', choices: ['replica', 'master'], description: 'Хост на котором должен быть вип')
+        choice(name: 'main_pg', choices: ['replica', 'master'], description: 'Host for VIP')
         booleanParam(name: 'force', defaultValue: false, description: '??!!')
         booleanParam(name: 'promote', defaultValue: true, description: 'Do promote \n\n\n\n')
 {% for hostname_list in hostname_lists.results %}
 {% set list = hostname_list.stdout.split('-')[1] %}
-        booleanParam(name: "{{ list }}", defaultValue: true, description: 'Адреса серверов для поля main_pg: \n Для переменной master : {{ dbs[loop.index0].ips[0]}} \n Для переменной replica : {{ dbs[loop.index0].ips[1]}}')
+        booleanParam(name: "{{ list }}", defaultValue: true, description: 'IP for main_pg: \n for master : {{ dbs[loop.index0].ips[0]}} \n for replica : {{ dbs[loop.index0].ips[1]}}')
 {% endfor %}
     }
-
     stages {
         stage('Parallel Stage') {
             parallel {
-{% set list = hostname_lists %}
-{% for db in dbs %}
-{% set list1 = list.results[loop.index-1].stdout.split('-')[1] %}
-                stage('Add vip ip for {{ list1 }} to master ') {
-                    when {
-                        allOf { 
-                            expression { params.main_pg == 'master' }
-                            expression { params.force == true }
-                            expression { params.{{list1}} == true }
-                        }
-                    }
+                stage('Main') {
                     steps {
                         script {
-                            try {
-                                del_ip('{{ db.ips[1]}}', '{{ db.ips[2]}}') 
-                                }
-                            catch (Exception e) {
-                            }
-                            def pg_lsclusters_vesr = lsclusters_vesr('{{ db.ips[0]}}') 
-                            if (params.promote == true) {
-                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
-                            }
-                            add_ip('{{ db.ips[0]}}', '{{ db.ips[2]}}') 
+                            def MasterStages = createMasterStages(hostsMap)
+                            parallel MasterStages
                         }
                     }
                 }
-                stage('Add vip ip for {{ list1 }} to replica ') {    
-                    when {
-                        allOf { 
-                            expression { params.main_pg == 'replica' }
-                            expression { params.force == true }
-                            expression { params.{{list1}} == true }
-
-                        }
-                    }
+                stage("Replication") {
                     steps {
                         script {
-                            try {
-                                del_ip('{{ db.ips[0]}}', '{{ db.ips[2]}}') 
-                                }
-                            catch (Exception e) {
-                            }
-                            def pg_lsclusters_vesr = lsclusters_vesr('{{ db.ips[1]}}') 
-                            if (params.promote == true) {
-                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
-                            }
-                            add_ip('{{ db.ips[1]}}', '{{ db.ips[2]}}')
+                            def SlaveStages = createSlaveStages(hostsMap)
+                            parallel SlaveStages
                         }
                     }
                 }
-{% endfor %}
             }
         }
     }

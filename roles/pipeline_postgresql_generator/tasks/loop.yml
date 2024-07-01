@@ -17,7 +17,7 @@
 
 - name: "Make jenkins file v2"
   template:
-    src   : "jenkinsfile_v2.j2"
+    src   : "jenkinsfile_v3.j2"
     dest  : "/Users/bprokin/wp/tmp/v2/jenkinsfile_{{ item }}"
     mode  : 0664
     force : true

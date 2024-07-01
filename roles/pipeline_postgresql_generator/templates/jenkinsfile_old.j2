@@ -4,6 +4,23 @@ def jobinfo =   "Databases list: \n"+
 
 currentBuild.rawBuild.project.description = jobinfo;
 
+def del_ip(ip1,ip2) {
+    sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ${ip1} sudo  ip addr del ${ip2} dev ens192 ')
+}
+
+def add_ip(ip1,ip2) {
+    sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ${ip1} sudo  ip addr add ${ip2} dev ens192 ')
+
+}
+
+def lsclusters_vesr(ip1) {
+    pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ${ip1} sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
+    return(pg_lsclusters_vesr)
+}
+def clusters_promote(ip1) {
+    sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ${ip1} sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
+}
+
 pipeline {
     agent { label 'worker-linux' }
     environment {
@@ -12,12 +29,12 @@ pipeline {
         pg_ctlcluster_arg = " main promote"
     }
     parameters {
-        choice(name: 'main_pg', choices: ['replica', 'master'], description: 'Хост на котором должен быть вип')
+        choice(name: 'main_pg', choices: ['replica', 'master'], description: 'Host for VIP')
         booleanParam(name: 'force', defaultValue: false, description: '??!!')
         booleanParam(name: 'promote', defaultValue: true, description: 'Do promote \n\n\n\n')
 {% for hostname_list in hostname_lists.results %}
 {% set list = hostname_list.stdout.split('-')[1] %}
-        booleanParam(name: "{{ list }}", defaultValue: true, description: 'Адреса серверов для поля main_pg: \n Для переменной master : {{ dbs[loop.index0].ips[0]}} \n Для переменной replica : {{ dbs[loop.index0].ips[1]}}')
+        booleanParam(name: "{{ list }}", defaultValue: true, description: 'IP for main_pg: \n for master : {{ dbs[loop.index0].ips[0]}} \n for replica : {{ dbs[loop.index0].ips[1]}}')
 {% endfor %}
     }
 
@@ -27,7 +44,7 @@ pipeline {
 {% set list = hostname_lists %}
 {% for db in dbs %}
 {% set list1 = list.results[loop.index-1].stdout.split('-')[1] %}
-                stage('Add vip ip for {{ list1 }} to master ') {
+                stage('{{ list1 }} add vip to master ') {
                     when {
                         allOf { 
                             expression { params.main_pg == 'master' }
@@ -38,22 +55,19 @@ pipeline {
                     steps {
                         script {
                             try {
-                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo  ip addr del {{ db.ips[2]}} dev ens192 ')
+                                del_ip('{{ db.ips[1]}}', '{{ db.ips[2]}}') 
                                 }
                             catch (Exception e) {
-    //                        throw e
                             }
-                            def pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
+                            def pg_lsclusters_vesr = lsclusters_vesr('{{ db.ips[0]}}') 
                             if (params.promote == true) {
-                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
-                            } else {
-                                echo 'Skip  promote'
+                                clusters_promote('{{ db.ips[0]}}')
                             }
-                            sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo  ip addr add {{ db.ips[2]}} dev ens192 ')
+                            add_ip('{{ db.ips[0]}}', '{{ db.ips[2]}}') 
                         }
                     }
                 }
-                stage('Add vip ip for {{ list1 }} to replica ') {    
+                stage('{{ list1 }} add vip to replica ') {    
                     when {
                         allOf { 
                             expression { params.main_pg == 'replica' }
@@ -65,18 +79,15 @@ pipeline {
                     steps {
                         script {
                             try {
-                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[0]}} sudo  ip addr del {{ db.ips[2]}} dev ens192 ')
+                                del_ip('{{ db.ips[0]}}', '{{ db.ips[2]}}') 
                                 }
                             catch (Exception e) {
-    //                       throw e
                             }
-                            def pg_lsclusters_vesr = sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo pg_lsclusters | grep 5432| awk \'{print \$1}\'' ).trim()
+                            def pg_lsclusters_vesr = lsclusters_vesr('{{ db.ips[1]}}') 
                             if (params.promote == true) {
-                                sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
-                            } else {
-                                echo 'Skip  promote'
+                                clusters_promote('{{ db.ips[1]}}')
                             }
-                            sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} {{ db.ips[1]}} sudo  ip addr add {{ db.ips[2]}} dev ens192 ')
+                            add_ip('{{ db.ips[1]}}', '{{ db.ips[2]}}')
                         }
                     }
                 }
