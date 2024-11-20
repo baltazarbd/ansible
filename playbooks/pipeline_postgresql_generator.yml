@@ -1,5 +1,5 @@
 - hosts: localhost
-  become: True
+  # become: True
   gather_facts: no
   roles:
     - /Users/bprokin/wp/ansible/roles/pipeline_postgresql_generator

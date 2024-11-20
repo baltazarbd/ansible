@@ -1,23 +1,14 @@
 - name: "include_vars {{ item }}"
   include_vars: "{{ item }}.yml"
 
-- name: show dictionary
+- name: show dictionary {{ item }}
   shell: ssh bprokin@"{{item.ips[0]}}" hostname -a |awk '{print $1}'
   with_items: "{{ dbs }}"
   register: hostname_lists
 
-
-- name: "Make jenkins file"
+- name: "Make jenkins file {{ item }}"
   template:
     src   : "jenkinsfile.j2"
     dest  : "/Users/bprokin/wp/tmp/jenkinsfile_{{ item }}"
-    mode  : 0664
-    force : true
-
-
-- name: "Make jenkins file v2"
-  template:
-    src   : "jenkinsfile_v3.j2"
-    dest  : "/Users/bprokin/wp/tmp/v2/jenkinsfile_{{ item }}"
     mode  : 0664
     force : true

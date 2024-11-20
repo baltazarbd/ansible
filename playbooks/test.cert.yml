@@ -1,0 +1,23 @@
+- hosts: localhost
+  user: rnd-deploy
+  become: True
+  tasks:
+
+  - name: RETRIEVE THIS CHANGE DETAIL
+    uri:
+      url: "https://certificate-manager-v2.anysndbx.com/api/v1/export-bundle-json/?cname=*.anysndbx.com"
+      method: GET
+      return_content: yes
+      body_format: json
+      headers:
+         Authorization: token 0123e3a77beceaeafe40ccc66ab3f9f4b648db49
+    register: json
+
+
+#  - name: copy key to a file
+#    copy: content={{ json.json.data[0].key }} dest="/tmp/cert.key"
+
+
+ # - name: copy certificate_with_ca to a file
+#    copy: content={{ json.json.data[0].certificate_with_ca }} dest="/tmp/cert.crt"
+

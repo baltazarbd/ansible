@@ -1,4 +1,4 @@
-- hosts: localhost
+- hosts: python_hosts
   gather_facts: no
 
   vars:

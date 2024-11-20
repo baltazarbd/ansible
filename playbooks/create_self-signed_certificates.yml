@@ -3,37 +3,83 @@
 
   vars:
     domains: [${domainsQuoted}]
-
   tasks:
+  - name: Get CA data
+    uri:
+      url: "https://certificate-manager-v2.anysndbx.com/api/v1/export-bundle-json/?cname=General%20IT%20Trust%20Root%20CA"
+      method: GET
+      return_content: yes
+      body_format: json
+      headers:
+         Authorization: token 0123e3a77beceaeafe40ccc66ab3f9f4b648db49
+    register: json
+
   - name: Create private key (RSA, 4096 bits)
     community.crypto.openssl_privatekey:
+      return_content: true
       path: certificate.key
-      size: 2048
+      size: 4096
+    register: privatekey
 
-  - name: Create certificate signing request (CSR) for self-signed certificate
-    community.crypto.openssl_csr:
-      privatekey_path: certificate.key
+  - name: Create certificate signing request (CSR) for new certificate
+    community.crypto.openssl_csr_pipe:
+      privatekey_content: "{{ privatekey.privatekey }}"
       common_name: "{{ domains[0] }}"
-      organization_name: Ansible, Inc.
       subject_alt_name: "{{ [ 'DNS:' ] | product(domains[1:]) | map('join') | list }}"
+      organization_name: RND
     register: csr
 
-
-  - name: Sign the CSR with CA
-    community.crypto.openssl_certificate:
-      path: certificate.pem
+  - name: Sign certificate with our CA
+    community.crypto.x509_certificate_pipe:
       csr_content: "{{ csr.csr }}"
-      privatekey_path: certificate.key
-      cacert_path: ca.crt
-      provider: selfsigned
-      days: 36500
+      provider: ownca
+      ownca_content: "{{ json.json.data[0].certificate }}"
+      ownca_privatekey_content: "{{ json.json.data[0].key }}"
+      ownca_not_after: +36500d  # valid for one year
+      ownca_not_before: "-1d"  # valid since yesterday
+    register: certificate
 
+  - name: Upload key to CM
+    uri:
+      url: "https://certificate-manager-v2.anysndbx.com/api/v1/keys/"
+      method: POST
+      follow_redirects: all
+      return_content: yes
+      body_format: json
+      status_code: 201
+      headers:
+        Authorization: token 0123e3a77beceaeafe40ccc66ab3f9f4b648db49
+        Content-Type: "application/json"
+      body: "{{ {
+               'name': domains[0],
+               'is_encrypted': false,
+               'kcontent': privatekey.privatekey,
+               'tenants': [24],
+               'force': true,
+               'passphrase': '',
+               'tags': []
+             } | to_json }}"
+    register: key_id
 
-  - name: Get certificate information
-    community.crypto.x509_certificate_info:
-      path: certificate.pem
-    register: result
-
-  - name: Show certificate information
-    debug:
-       msg: "{{ result }}"
+  - name: Upload certificate to CM
+    uri:
+      url: "https://certificate-manager-v2.anysndbx.com/api/v1/certificates/"
+      method: POST
+      follow_redirects: all
+      return_content: yes
+      body_format: json
+      status_code: 201
+      headers:
+        Authorization: token 0123e3a77beceaeafe40ccc66ab3f9f4b648db49
+        Content-Type: "application/json"
+      body: "{{ {
+               'name': domains[0],
+               'ccontent': certificate.certificate,
+               'is_ca': false,
+               'ca': json.json.data[0].id,
+               'tenants': [24],
+               'tags': [],
+               'force': true,
+               'cname_inheritance': false,
+               'key': key_id.json.pk
+             } | to_json }}"
