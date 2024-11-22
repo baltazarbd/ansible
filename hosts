@@ -12,3 +12,5 @@ mmm
 [insecuressh:vars]
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
+[docker]
+dtest ansible_port=8022 ansible_ssh_user=root ansible_ssh_pass=root
