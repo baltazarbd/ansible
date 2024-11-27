@@ -14,3 +14,6 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 [docker]
 dtest ansible_port=8022 ansible_ssh_user=root ansible_ssh_pass=root
+
+[7robot-hsfootball03]
+10.213.107.38   ansible_user=rnd-deploy

@@ -1,0 +1,9 @@
+---
+- hosts: 7robot-hsfootball03
+  become: True
+  
+  # gather_facts: no
+  roles:
+    - /Users/bprokin/wp/ansible/roles/python
+    - /Users/bprokin/wp/ansible/roles/anaconda
+    - /Users/bprokin/git_work/service/roles/1.24hsoft/api-automatic-live-tracking/prod

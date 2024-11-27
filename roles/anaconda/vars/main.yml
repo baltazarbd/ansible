@@ -1,0 +1,8 @@
+---
+anaconda_release: 2024.06-1 # See https://repo.anaconda.com/archive/
+anaconda_arc: Linux-x86_64
+anaconda_bin: Anaconda3-{{ anaconda_release }}-{{ anaconda_arc }}.sh
+anaconda_url: "https://nexus.fbsvc.bz/repository/robot_raw_models/anaconda/{{ anaconda_bin }}"
+robot_raw_models:
+  username: usrNexusJenkins 
+  password: 51dC5iDcGwHg

@@ -1,0 +1,7 @@
+---
+- name: Run make install
+  community.general.make:
+    chdir: "{{ python_src_dir }}/Python-{{ python_release }}"
+    target: install
+  register: install_result
+  when: make_result is not skipped

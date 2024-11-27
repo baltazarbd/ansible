@@ -1,0 +1,24 @@
+---
+- name: Download Python source archive
+  ansible.builtin.get_url:
+    dest: "{{ python_src_dir }}"
+    url: "{{ python_url }}"
+    username: "{{ robot_raw_models.username }}"
+    password: "{{ robot_raw_models.password }}"
+
+- name: Extract archive
+  ansible.builtin.unarchive:
+    src: "{{ python_src_dir }}/{{ python_archive }}"
+    dest: "{{ python_src_dir }}"
+    remote_src: true
+
+- name: Run ./configure
+  ansible.builtin.command:
+    cmd: ./configure --enable-optimizations --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
+    chdir: "{{ python_src_dir }}/Python-{{ python_release }}"
+    creates: "{{ python_src_dir }}/Python-{{ python_release }}/config.log"
+
+- name: Run make to build python
+  community.general.make:
+    chdir: "{{ python_src_dir }}/Python-{{ python_release }}"
+  register: make_result

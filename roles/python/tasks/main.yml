@@ -1,0 +1,12 @@
+---
+- include_tasks: update_packages.yml
+- include_tasks: reboot.yml
+  # when:
+  #  - ansible_distribution == "Debian"
+
+- include_tasks: debian12.yml
+  # when:
+  #   - ansible_distribution                     == "Debian"
+  #   - ansible_distribution_major_version | int == 12
+- include_tasks: make.yml
+- include_tasks: install.yml

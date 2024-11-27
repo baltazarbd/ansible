@@ -1,0 +1,6 @@
+---
+- name: Install dependency packages
+  ansible.builtin.apt:
+    name: "{{ item.d12 }}"
+    state: latest
+  loop: "{{ packages }}"
