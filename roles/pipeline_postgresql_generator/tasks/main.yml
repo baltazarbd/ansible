@@ -11,14 +11,14 @@
 
 # - include_tasks: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
 #   with_items:
-    # - 51r3
-    # - 52r3
-    # - 53r3
-    # - 54r3
-    # - 55r3
-    # - 56r3
-    # - 57r3
-    # - 58r3
+#     - 51r3
+#     - 52r3
+#     - 53r3
+#     - 54r3
+#     - 55r3
+#     - 56r3
+#     - 57r3
+#     - 58r3
 
 - include_tasks: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
   with_items:

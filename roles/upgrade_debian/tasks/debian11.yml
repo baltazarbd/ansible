@@ -1,0 +1,36 @@
+---
+- name: "Make source file to  debian 11"
+  template:
+    src   : "sources.list_to_d11.j2"
+    dest  : "/etc/apt/sources.list"
+    mode  : 0644
+    force : true
+
+- name: Perform a dist-upgrade.
+  ansible.builtin.apt:
+    upgrade: safe
+    update_cache: yes
+
+- name: Perform a full-upgrade.
+  ansible.builtin.apt:
+    upgrade: full
+    update_cache: yes
+
+- name: Check if a reboot is required
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+    get_checksum: no
+  register: reboot_required_file
+
+- name: Reboot the server (if required).
+  ansible.builtin.reboot:
+    reboot_timeout: 900
+  when: reboot_required_file.stat.exists == true
+
+- name: Remove dependencies that are no longer required.
+  ansible.builtin.apt:
+    autoremove: yes
+
+- name: Remove useless packages from the cache
+  ansible.builtin.apt:
+    autoclean: yes

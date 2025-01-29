@@ -1,0 +1,11 @@
+---
+- hosts: 4robot-hshockey02
+  tasks:
+  - name: set host
+    set_fact:
+      host1_full: "{{ ansible_hostname }}"
+  - name: show list
+    debug:
+       msg: "{{ host1_full }}"
+    delegate_to: localhost
+

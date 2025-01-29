@@ -1,9 +1,11 @@
 ---
-- hosts: 7robot-hsfootball03
+- hosts: 8office-jwd01
+  remote_user: bprokin
   become: True
   
   # gather_facts: no
   roles:
-    - /Users/bprokin/wp/ansible/roles/python
-    - /Users/bprokin/wp/ansible/roles/anaconda
-    - /Users/bprokin/git_work/service/roles/1.24hsoft/api-automatic-live-tracking/prod
+    # - /Users/bprokin/wp/ansible/roles/python
+    # - /Users/bprokin/wp/ansible/roles/anaconda
+    # - /Users/bprokin/git_work/service/roles/1.24hsoft/api-automatic-live-tracking/test
+    - /Users/bprokin/wp/ansible/roles/upgrade_debian

@@ -1,0 +1,5 @@
+- hosts: localhost
+  # become: True
+  gather_facts: no
+  roles:
+    - /Users/bprokin/wp/ansible/roles/read_jira_issue

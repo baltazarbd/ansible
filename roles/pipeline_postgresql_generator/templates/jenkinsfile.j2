@@ -25,6 +25,8 @@ def createMasterStages(hostsMap) {
                             sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[0] + ' sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
                         }
                         sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[0] + ' sudo  ip addr add ' + hosts[2] + ' dev ens192 ')
+                        sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[0] + ' sudo  arping -c 4 -A -I ens192' + hosts[2])
+
                     }
                 }
             }
@@ -48,6 +50,8 @@ def createSlaveStages(hostsMap) {
                             sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[1] + ' sudo pg_ctlcluster ' + pg_lsclusters_vesr + pg_ctlcluster_arg)
                         }
                         sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[1] + ' sudo  ip addr add ' + hosts[2] + ' dev ens192 ')
+                        sh (returnStdout: true, script: '${sshcmd} -i ${KeyFile} ' + hosts[1] + ' sudo  arping -c 4 -A -I ens192' + hosts[2])
+
                     }
                 }
             }

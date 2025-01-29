@@ -1,0 +1,2 @@
+Длинна  списка 
+          "a_list length: {{ a_list | length }}",

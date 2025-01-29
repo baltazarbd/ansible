@@ -1,4 +1,9 @@
 ---
+- name: Get stats of the conda
+  ansible.builtin.stat:
+    path: /srv/anaconda3/bin/conda
+  register: conda_installed
+
 - include_tasks: install.yml  
-# when:
-    # - ansible_distribution                     == "Debian"
+  # when:
+  #   - not conda_installed.stat.exists

@@ -1,0 +1,12 @@
+- hosts: all_robot
+  user: bprokin
+  become: True
+  tasks:
+
+  - name: Remove text
+    ansible.builtin.blockinfile:
+      path: /etc/profile
+      marker: "export PATH=/srv/anaconda3/bin:$PATH"
+      block: ""
+  - name: remove env 
+    shell: /srv/anaconda3/bin/conda init --reverse --all

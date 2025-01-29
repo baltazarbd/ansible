@@ -9,6 +9,11 @@
         username: "{{ robot_raw_models.username }}"
         password: "{{ robot_raw_models.password }}"
         mode: 0550
+        timeout : 200
+      register: get_url_result
+      retries: 300
+      delay: 10
+      until: get_url_result.checksum_src == get_url_result.checksum_dest
 
     - name: Create conda folder
       become: True
@@ -25,10 +30,6 @@
       file:
         state: absent
         path: /srv/{{ anaconda_bin }}
-
-    - name: Add anaconda bin to path
-      become: True
-      shell: echo 'export PATH=/srv/anaconda3/bin:$PATH' >> /etc/profile
 
     - name: conda - read permission for all
       become: True

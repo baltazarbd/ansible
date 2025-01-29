@@ -1,0 +1,51 @@
+- hosts: localhost
+  gather_facts: no
+
+  vars:
+    myitems:
+      - ca01.fbc.om
+      - ca02.fbc.om
+      - "Hello"
+      - "World"
+      - "Ansible"
+      - ca01.fbc.om
+      - ca02.fbc.om
+      - "Hello"
+      - "World"
+      - "Ansible"
+      - ca01.fbc.om
+      - ca02.fbc.om
+      - "Hello"
+      - "World"
+      - "Ansible"
+      - ca01.fbc.om
+      - ca02.fbc.om
+      - "Hello"
+      - "World"
+      - "Ansible"
+      - ca01.fbc.om
+      - ca02.fbc.om
+      - "Hello"
+      - "World"
+      - "Ansible"
+      - ca01.fbc.om
+      - ca02.fbc.om
+      - "Hello"
+      - "World"
+      - "Ansible"
+      - ca01.fbc.om
+      - ca02.fbc.om
+      - "Hello"
+      - "World"
+      - "Ansible"
+
+  tasks:
+  # - name: show list
+  #   shell: echo "1 {{item}}" >/Users/bprokin/test_parr/{{item}} 
+  #   loop: "{{myitems}}"
+  #   async: 10
+  #   poll: 0
+  - name: Check contents for emptiness
+    ansible.builtin.debug:
+      msg: "{{ myitems | join(',') |regex_replace(',', '|')  }}"
+    

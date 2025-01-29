@@ -1,0 +1,6 @@
+---
+- hosts: 8office-jwd01
+  remote_user: bprokin
+  become: True
+  roles:
+    - /Users/bprokin/wp/ansible/roles/upgrade_debian
