@@ -1,0 +1,11 @@
+---
+- name: Create an issue
+  community.general.jira:
+    uri: '{{ server }}'
+    username: '{{ user }}'
+    password: '{{ pass }}'
+    project: STCIT
+    operation: create
+    summary: "Перевести на JSL"
+    description: JOB
+    issuetype: Task

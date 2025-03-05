@@ -1,0 +1,9 @@
+{% set line = issue.meta.fields.description.split('\r\n')[1:] %}
+{% for i in line[0] | zip (line[0::2])| zip (line[1::2]) %}
+{% set firstline = i[0][1].split('|')  %}
+{% set new_i=i[1:][0].split('|') %}
+  - ips:
+    - "{{ firstline[2] }}" 
+    - "{{ new_i[2] }}" 
+    - "{{ firstline[4] }}/23" 
+{% endfor %}
