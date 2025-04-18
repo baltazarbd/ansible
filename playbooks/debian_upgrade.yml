@@ -1,5 +1,5 @@
 ---
-- hosts: 8office-jwd01
+- hosts: 5devsvc-jwb02
   remote_user: bprokin
   become: True
   roles:

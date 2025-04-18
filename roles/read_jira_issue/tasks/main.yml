@@ -6,7 +6,7 @@
     password: '{{ pass }}'
     project: STCIT
     operation: fetch
-    issue: STCIT-43236
+    issue: STCIT-45711
   register: issue
 
 - name: "Make wars file"

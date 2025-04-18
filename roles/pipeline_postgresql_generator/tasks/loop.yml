@@ -1,14 +1,51 @@
 - name: "include_vars {{ item }}"
   include_vars: "{{ item }}.yml"
 
-- name: show dictionary {{ item }}
-  shell: ssh bprokin@"{{item.ips[0]}}" hostname -a |awk '{print $1}'
+# - name: show dictionary {{ item }}
+#   shell: ssh -o StrictHostKeyChecking=no bprokin@"{{item.ips[0]}}" hostname -a |awk '{print $1}'
+#   with_items: "{{ dbs }}"
+#   register: hostname_lists
+
+# - name: Debug hostname results
+#   debug:
+#     msg: "{{ hostname_lists }}"
+
+# - name: "Make jenkins file {{ item }}"
+#   template:
+#     src   : "jenkinsfile.j2"
+#     dest  : "/Users/bprokin/git_work/jenkins_change_vipip/Jenkinsfile_{{ item }}"
+#     mode  : 0664
+#     force : true
+
+
+
+########################################## v3
+- name: Получить hostname по первому IP (через ssh + hostname -a)
+  ansible.builtin.command: >
+    ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5
+    bprokin@{{ item.ips[0] }} "hostname -a | awk '{print $1}'"
   with_items: "{{ dbs }}"
+  register: hostname_jobs
+  async: 30
+  poll: 0
+  loop_control:
+    label: "{{ item.ips[0] }}"
+  vars:
+    ansible_command_ip: "{{ item.ips[0] }}"
+
+- name: Ожидание завершения async задач
+  async_status:
+    jid: "{{ item.ansible_job_id }}"
   register: hostname_lists
+  until: hostname_lists.finished
+  retries: 10
+  delay: 1
+  with_items: "{{ hostname_jobs.results }}"
+
 
 - name: "Make jenkins file {{ item }}"
   template:
     src   : "jenkinsfile.j2"
-    dest  : "/Users/bprokin/wp/tmp/jenkinsfile_{{ item }}"
+    dest  : "/Users/bprokin/git_work/jenkins_change_vipip/Jenkinsfile_{{ item }}"
     mode  : 0664
     force : true

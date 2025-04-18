@@ -1,34 +1,25 @@
-# - include_tasks: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
-#   with_items:
-#     - 51
-#     - 52
-#     - 53
-#     - 54
-#     - 55
-#     - 56
-#     - 57
-#     - 58
-
-# - include_tasks: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
-#   with_items:
-#     - 51r3
-#     - 52r3
-#     - 53r3
-#     - 54r3
-#     - 55r3
-#     - 56r3
-#     - 57r3
-#     - 58r3
+- include_tasks: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
+  with_items:
+    - postgresql_s51_master-replica_(dell)
+    - postgresql_s51_master-replica_(dell)
+    - postgresql_s52_master-replica_(dell)
+    - postgresql_s53_master-replica_(dell)
+    - postgresql_s54_master-replica_(dell)
+    - postgresql_s55_master-replica_(dell)
+    - postgresql_s56_master-replica_(dell)
+    - postgresql_s57_master-replica_(dell)
+    - postgresql_s58_master-replica_(dell)
+- include_tasks: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
+  with_items:
+    - postgresql_s51_master-master-test
+    - postgresql_s52_master-master-test
+    - postgresql_s53_master-master-test
+    - postgresql_s54_master-master-test
+    - postgresql_s55_master-master-test
+    - postgresql_s56_master-master-test
+    - postgresql_s57_master-master-test
+    - postgresql_s58_master-master-test
 
 - include_tasks: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
   with_items:
-    - 51cor
-
-
-#- include_tasks: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
-#  with_items:
-#      - all
-
-# - include_tasks: ./../roles/pipeline_postgresql_generator/tasks/loop.yml
-#   with_items:
-#     - sm
+    - postgresql_COR_master-replica
